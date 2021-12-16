@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 import torch
 import matplotlib.pyplot as plt
 import pickle as pk
-from utils import set_random_seed
+from utils import set_random_seed, save_to_pkl
 
 from bandit_dropout import egreedy_bandit_dropout, boltzman_bandit_dropout
 from architecture import architectureMNIST
@@ -54,10 +54,9 @@ def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'linUcb',
 
 
     
-    with open(f'history/{exp_name}.pkl', 'wb') as f:
-        pk.dump(history_list, f)
+    save_to_pkl(exp_name, history_list)
 
-    result_test 
+     
     fig,ax = plt.subplots(taille_subplot,taille_subplot)
     fig.tight_layout(pad=1.2)
     for bucket in range(dropout.nb_buckets):        

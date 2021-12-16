@@ -105,7 +105,11 @@ class BernoulliBandit:
 
 class egreedy_bandit_dropout(nn.Module):
 
+<<<<<<< HEAD
     def __init__(self, nb_buckets, nb_arms_per_bucket, dropout_min = 0.0, dropout_max = 0.5, epsilon = 0.20, p=0.2,epsilon_decroissant=False):
+=======
+    def __init__(self, nb_buckets, nb_arms_per_bucket, dropout_min = 0.0, dropout_max = 0.5, epsilon = 0.50, p=0.2,epsilon_decroissant=False,batch_update=True):
+>>>>>>> 266a4090a6b2b86bb58ee360008af438bb53c1f3
         super(egreedy_bandit_dropout, self).__init__()
         self.triggered = False
         self.bucket_boundaries = torch.Tensor(scipy.stats.norm.ppf(torch.linspace(1/nb_buckets, 1-1/nb_buckets ,nb_buckets-1)))                
@@ -121,6 +125,9 @@ class egreedy_bandit_dropout(nn.Module):
         self.p=p
         self.epsilon_decroissant = epsilon_decroissant
         self.t = 0
+        self.batch_update = batch_update
+        self.dropout_rate_per_arm = None
+        self.update = True
 
 
     def get_mask(self, dropout_rates):
@@ -157,10 +164,11 @@ class egreedy_bandit_dropout(nn.Module):
         return arms_chosen_for_each_bucket
 
     def get_dropout_rate_per_arm(self):
-        return self.arms[self.egreedy()]
+        self.dropout_rate_per_arm = self.arms[self.egreedy()]
 
     def get_dropout_rate_for_each_neurons(self, x):
-        dropout_rate_per_arm = self.get_dropout_rate_per_arm()
+
+        dropout_rate_per_arm = self.dropout_rate_per_arm
         x_bucket = torch.bucketize(x, self.bucket_boundaries)
 
         return dropout_rate_per_arm[x_bucket.flatten()].reshape(x_bucket.shape)

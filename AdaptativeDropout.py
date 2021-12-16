@@ -8,7 +8,7 @@ from torch.utils.data import  DataLoader, random_split
 import torchvision.transforms as transforms
 import torch
 import matplotlib.pyplot as plt
-from utils import set_random_seed
+from utils import set_random_seed, save_to_pkl
 import pickle as pk
 
 
@@ -85,8 +85,7 @@ def run_experience(seed=None, exp_name = "Adaptative_Dropout"):
         history = pt_modele.fit_generator(train_dataloader_CIFAR10,valid_dataloader_CIFAR10,epochs=20)
         history_list.append(history)
 
-    with open(f'history/{exp_name}.pkl', 'wb') as f:
-        pk.dump(history_list, f)
+    save_to_pkl(exp_name, history_list)
 
 
 

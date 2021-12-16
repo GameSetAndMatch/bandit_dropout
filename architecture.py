@@ -36,14 +36,6 @@ class architectureMNIST(nn.Module):
 
         return x
 
-<<<<<<< HEAD
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-=======
-
->>>>>>> c692b9f5b2168813e48e0eefe9c14239a0424054
-
 
 class architectureCIFAR10(nn.Module):
 

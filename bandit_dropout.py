@@ -105,7 +105,7 @@ class BernoulliBandit:
 
 class egreedy_bandit_dropout(nn.Module):
 
-    def __init__(self, nb_buckets, nb_arms_per_bucket, dropout_min = 0.0, dropout_max = 0.5, epsilon = 0.50, p=0.2,epsilon_decroissant=False):
+    def __init__(self, nb_buckets, nb_arms_per_bucket, dropout_min = 0.0, dropout_max = 0.5, epsilon = 0.20, p=0.2,epsilon_decroissant=False):
         super(egreedy_bandit_dropout, self).__init__()
         self.triggered = False
         self.bucket_boundaries = torch.Tensor(scipy.stats.norm.ppf(torch.linspace(1/nb_buckets, 1-1/nb_buckets ,nb_buckets-1)))                
@@ -125,10 +125,7 @@ class egreedy_bandit_dropout(nn.Module):
 
     def get_mask(self, dropout_rates):
 
-        if torch.cuda.is_available():
-            mask =  torch.lt(dropout_rates,  torch.FloatTensor(dropout_rates.shape).uniform_(0, 1).cuda())
-        else:
-            mask = torch.lt(dropout_rates,  torch.FloatTensor(dropout_rates.shape).uniform_(0, 1))
+        mask = torch.lt(dropout_rates,  torch.FloatTensor(dropout_rates.shape).uniform_(0, 1))
 
         return mask.int()
     
@@ -298,10 +295,10 @@ class linucb_bandit_dropout(nn.Module):
 
 
 
-class boltzman_bandit_dropout(nn.Module):
+class boltzmann_bandit_dropout(nn.Module):
 
-    def __init__(self, nb_buckets, nb_arms_per_bucket, dropout_min = 0.15, dropout_max = 0.25, c = 1, p=None):
-        super(boltzman_bandit_dropout, self).__init__()
+    def __init__(self, nb_buckets, nb_arms_per_bucket, dropout_min = 0.00, dropout_max = 0.50, c = 1, p=None, batch_update = True):
+        super(boltzmann_bandit_dropout, self).__init__()
         self.triggered = False
         self.bucket_boundaries = torch.tensor(norm.ppf(torch.linspace(1/nb_buckets, 1-1/nb_buckets ,nb_buckets-1)))                  
         self.arms = torch.linspace(dropout_min, dropout_max, nb_arms_per_bucket)
@@ -320,10 +317,9 @@ class boltzman_bandit_dropout(nn.Module):
         self.dropout_values = [[] for _ in range(self.nb_buckets)]
         self.arms_to_update = torch.tensor([0])
         self.choose_new_arms = True
+        self.batch_update
 
     
-
-
 
     def find_min_diff(self,arr):
         n = len(arr)

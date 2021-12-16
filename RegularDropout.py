@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 import torch
 import matplotlib.pyplot as plt
 import pickle as pk
-from utils import set_random_seed
+from utils import set_random_seed, save_to_pkl
 
 from bandit_dropout import *
 from architecture import architectureMNIST
@@ -23,7 +23,7 @@ transformer = transforms.Compose([
                                transforms.Normalize((0.1307,), (0.3081,))
                                 ])
 
-def run_experience(nombre_entrainement=20, nombre_epoch=20,p=0.5, exp_name = 'RegularDropout', seed=None):
+def run_experience(nombre_entrainement=2, nombre_epoch=20,p=0.5, exp_name = 'RegularDropout', seed=None):
 
     set_random_seed(seed)
     dataset_CIFAR10 =  datasets.CIFAR10(root='./data', train=True, download=True, transform=transformer)

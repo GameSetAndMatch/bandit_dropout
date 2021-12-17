@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 import torch
 import matplotlib.pyplot as plt
 import pickle as pk
-from utils import set_random_seed, save_to_pkl,save_loss_acc_plot
+from utils import set_random_seed, save_to_pkl,save_loss_acc_plot,save_experience
 
 from bandit_dropout import *
 from architecture import architectureMNIST
@@ -53,8 +53,7 @@ def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'Dynamiqu
 
 
     
-    save_to_pkl(history_list,exp_name)
-    save_loss_acc_plot(history_list,exp_name)
+    save_experience(history_list,exp_name)
 
     result_test 
     fig,ax = plt.subplots(taille_subplot,taille_subplot)

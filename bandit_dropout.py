@@ -183,6 +183,115 @@ class egreedy_bandit_dropout(nn.Module):
 
 
 
+class boltzmann_bandit_dropout(nn.Module):
+
+    def __init__(self, nb_buckets, nb_arms_per_bucket, dropout_min = 0.00, dropout_max = 0.50, c = 1, p=None, batch_update = True):
+        super(boltzmann_bandit_dropout, self).__init__()
+        self.triggered = False
+        self.bucket_boundaries = torch.tensor(norm.ppf(torch.linspace(1/nb_buckets, 1-1/nb_buckets ,nb_buckets-1)))                  
+        self.arms = torch.linspace(dropout_min, dropout_max, nb_arms_per_bucket)
+        self.p = (dropout_max + dropout_min)/2 if p is None else p
+        self.dropout_before_triggered = nn.Dropout(self.p)
+        self.c = c
+        self.eta = torch.full((nb_buckets,), c)
+        self.nb_arms_per_bucket = nb_arms_per_bucket
+        self.nb_buckets = nb_buckets
+        self.mu_hat = torch.ones(nb_buckets, nb_arms_per_bucket)
+        self.cumulated_rewards =  torch.ones(nb_buckets, nb_arms_per_bucket)
+        self.nb_played =  torch.ones(nb_buckets, nb_arms_per_bucket)
+        self.last_played = torch.zeros(nb_buckets, nb_arms_per_bucket)
+        self.last_played[:, int(np.floor(self.nb_arms_per_bucket/2))] = 1
+        self.arms_chosen_for_each_bucket = torch.full((nb_buckets,), int(np.floor(self.nb_arms_per_bucket/2)))
+        self.dropout_values = [[] for _ in range(self.nb_buckets)]
+        self.arms_to_update = torch.tensor([0])
+        self.choose_new_arms = True
+        self.batch_update = batch_update
+
+    
+
+    def find_min_diff(self,arr):
+        n = len(arr)
+        arr = sorted(arr)
+
+        diff = np.infty
+
+        for i in range(n-1):
+            if arr[i+1] - arr[i] < diff:
+                diff = arr[i+1] - arr[i]
+
+        return max(diff, 0.1)
+
+
+    def get_mask(self, dropout_rates):
+        new_mask = torch.lt(dropout_rates,  torch.FloatTensor(dropout_rates.shape).uniform_(0, 1))
+        self.mask = new_mask.int()
+        return self.mask
+    
+    def calculate_mu_hat(self):
+        self.mu_hat = self.cumulated_rewards/self.nb_played
+        
+
+    def softmax(self, probs):
+	    e = np.exp(probs)
+	    return e / e.sum()
+    
+    def choose_arm_from_probs(self, probs):
+        return np.random.choice(list(range(self.nb_arms_per_bucket)), size=1, p = probs)[0]
+
+
+    def choose_arms_per_bucket(self) -> torch.Tensor:
+        """
+        implementation of boltzman strategy for each bucket that correspond to a multi-armed bandit
+
+        Returns:
+            torch.Tensor(nb_buckets,): arms chosen for each bucket
+        """
+        
+        if self.choose_new_arms:
+            self.calculate_mu_hat()
+            probs = np.apply_along_axis(self.softmax , 0, self.eta * np.array(self.mu_hat.T)).T
+            arms_chosen_for_each_bucket =  np.apply_along_axis(self.choose_arm_from_probs, 1, probs)
+
+            self.last_played = torch.zeros(self.nb_buckets, self.nb_arms_per_bucket)
+            self.last_played[torch.arange(self.nb_buckets), arms_chosen_for_each_bucket] = 1
+            self.arms_chosen_for_each_bucket = arms_chosen_for_each_bucket
+            self.choose_new_arms = False
+        
+
+        return self.arms_chosen_for_each_bucket
+
+    def get_dropout_rate_per_arm(self):
+        dropout_rate_per_arm = self.arms[self.choose_arms_per_bucket()]
+        #for i in range(self.nb_buckets):
+        #    self.dropout_values[i].append(dropout_rate_per_arm[i])
+        return dropout_rate_per_arm
+
+    def get_dropout_rate_for_each_neurons(self, x):
+        dropout_rate_per_arm = self.get_dropout_rate_per_arm()
+        x_bucket = torch.bucketize(x, self.bucket_boundaries)
+
+        self.dropout_rate = dropout_rate_per_arm[x_bucket.flatten()].reshape(x_bucket.shape)
+        return self.dropout_rate
+    
+    def play(self, x):
+        dropout_rate = self.get_dropout_rate_for_each_neurons(x)
+        self.eta = np.full((self.nb_buckets,), self.c) * np.array(np.log(self.nb_played.sum(axis = 1)))/ np.apply_along_axis(self.find_min_diff, 1, self.mu_hat)
+        return_values = torch.nan_to_num(x * self.get_mask(dropout_rate) / (1-dropout_rate))
+        return return_values
+
+    
+    def forward(self,x):
+        self.update = x.requires_grad
+        
+        if self.triggered:
+
+            return self.play(x)  
+        else:
+            for i in range(self.nb_buckets):
+                self.dropout_values[i].append(self.p)
+            return self.dropout_before_triggered(x)
+
+
 
 class linucb_bandit_dropout(nn.Module):
 
@@ -214,10 +323,8 @@ class linucb_bandit_dropout(nn.Module):
     def get_mask(self, dropout_rates):
         if (type(dropout_rates) != torch.Tensor) :
             dropout_rates = torch.Tensor(dropout_rates)
-        if torch.cuda.is_available():
-            mask =  torch.lt(dropout_rates,  torch.FloatTensor(dropout_rates.shape).uniform_(0, 1).cuda())
-        else:
-            mask = torch.lt(dropout_rates,  torch.FloatTensor(dropout_rates.shape).uniform_(0, 1))
+
+        mask = torch.lt(dropout_rates,  torch.FloatTensor(dropout_rates.shape).uniform_(0, 1))
 
         return mask.int()
     
@@ -295,128 +402,6 @@ class linucb_bandit_dropout(nn.Module):
         else:
             return x
 
-
-
-
-
-
-class boltzmann_bandit_dropout(nn.Module):
-
-    def __init__(self, nb_buckets, nb_arms_per_bucket, dropout_min = 0.00, dropout_max = 0.50, c = 1, p=None, batch_update = True):
-        super(boltzmann_bandit_dropout, self).__init__()
-        self.triggered = False
-        self.bucket_boundaries = torch.tensor(norm.ppf(torch.linspace(1/nb_buckets, 1-1/nb_buckets ,nb_buckets-1)))                  
-        self.arms = torch.linspace(dropout_min, dropout_max, nb_arms_per_bucket)
-        self.p = (dropout_max + dropout_min)/2 if p is None else p
-        self.dropout_before_triggered = nn.Dropout(self.p)
-        self.c = c
-        self.eta = torch.full((nb_buckets,), c)
-        self.nb_arms_per_bucket = nb_arms_per_bucket
-        self.nb_buckets = nb_buckets
-        self.mu_hat = torch.ones(nb_buckets, nb_arms_per_bucket)
-        self.cumulated_rewards = torch.ones(nb_buckets, nb_arms_per_bucket)
-        self.nb_played = torch.ones(nb_buckets, nb_arms_per_bucket)
-        self.last_played = torch.zeros(nb_buckets, nb_arms_per_bucket)
-        self.last_played[:, int(np.floor(self.nb_arms_per_bucket/2))] = 1
-        self.arms_chosen_for_each_bucket = torch.full((nb_buckets,), int(np.floor(self.nb_arms_per_bucket/2)))
-        self.dropout_values = [[] for _ in range(self.nb_buckets)]
-        self.arms_to_update = torch.tensor([0])
-        self.choose_new_arms = True
-        self.batch_update
-
-    
-
-    def find_min_diff(self,arr):
-        n = len(arr)
-        arr = sorted(arr)
-
-        diff = np.infty
-
-        for i in range(n-1):
-            if arr[i+1] - arr[i] < diff:
-                diff = arr[i+1] - arr[i]
-
-        return max(diff, 0.1)
-
-
-    def get_mask(self, dropout_rates):
-        new_mask = torch.lt(dropout_rates,  torch.FloatTensor(dropout_rates.shape).uniform_(0, 1))
-        self.mask = new_mask.int()
-        self.choose_new_arms = False
-        return self.mask
-    
-    def calculate_mu_hat(self):
-        self.mu_hat = self.cumulated_rewards/self.nb_played
-        
-    def update_metrics(self, arms_chosen_for_each_bucket, arms_to_update = None):
-        if arms_to_update is None:
-            self.last_played = torch.zeros(self.nb_buckets, self.nb_arms_per_bucket)
-            self.last_played[torch.arange(self.nb_buckets), arms_chosen_for_each_bucket] = 1
-            self.nb_played += self.last_played
-
-        else:
-            self.last_played[arms_to_update, ] = 0  
-            self.last_played[arms_to_update, arms_chosen_for_each_bucket[arms_to_update]] = 1
-            self.nb_played += self.last_played
-
-    def softmax(self, probs):
-	    e = np.exp(probs)
-	    return e / e.sum()
-    
-    def choose_arm_from_probs(self, probs):
-        return np.random.choice(list(range(self.nb_arms_per_bucket)), size=1, p = probs)[0]
-
-
-    def choose_arms_per_bucket(self) -> torch.Tensor:
-        """
-        implementation of boltzman strategy for each bucket that correspond to a multi-armed bandit
-
-        Returns:
-            torch.Tensor(nb_buckets,): arms chosen for each bucket
-        """
-        
-        if self.choose_new_arms:
-            self.calculate_mu_hat()
-            probs = np.apply_along_axis(self.softmax , 0, self.eta * np.array(self.mu_hat.T)).T
-            arms_chosen_for_each_bucket =  np.apply_along_axis(self.choose_arm_from_probs, 1, probs)
-            #self.update_metrics(arms_chosen_for_each_bucket = arms_chosen_for_each_bucket, arms_to_update = self.arms_to_update)
-            self.update_metrics(arms_chosen_for_each_bucket = arms_chosen_for_each_bucket)
-            self.arms_to_update = torch.tensor([(self.arms_to_update + 1) % (len(self.arms) + 1)])
-            self.arms_chosen_for_each_bucket = torch.argmax(self.last_played, 1)
-        
-
-        return self.arms_chosen_for_each_bucket
-
-    def get_dropout_rate_per_arm(self):
-        dropout_rate_per_arm = self.arms[self.choose_arms_per_bucket()]
-        for i in range(self.nb_buckets):
-            self.dropout_values[i].append(dropout_rate_per_arm[i])
-        return dropout_rate_per_arm
-
-    def get_dropout_rate_for_each_neurons(self, x):
-        dropout_rate_per_arm = self.get_dropout_rate_per_arm()
-        x_bucket = torch.bucketize(x, self.bucket_boundaries)
-
-        self.dropout_rate = dropout_rate_per_arm[x_bucket.flatten()].reshape(x_bucket.shape)
-        return self.dropout_rate
-    
-    def play(self, x):
-        dropout_rate = self.get_dropout_rate_for_each_neurons(x)
-        self.eta = np.full((self.nb_buckets,), self.c) * np.array(np.log(self.nb_played.sum(axis = 1)))/ np.apply_along_axis(self.find_min_diff, 1, self.mu_hat)
-        return_values = torch.nan_to_num(x * self.get_mask(dropout_rate) / (1-dropout_rate))
-        return return_values
-
-    
-    def forward(self,x):
-        self.update = x.requires_grad
-        
-        if self.triggered:
-
-            return self.play(x)  
-        else:
-            for i in range(self.nb_buckets):
-                self.dropout_values[i].append(self.p)
-            return self.dropout_before_triggered(x)
 
 
 

@@ -31,7 +31,7 @@ train_dataloader_CIFAR10 = DataLoader(train_dataset_CIFAR10, batch_size=32, shuf
 valid_dataloader_CIFAR10 = DataLoader(valid_dataset_CIFAR10, batch_size=32, shuffle=True)
 
 
-def run_experience(exp_name = 'boltzmann',nb_buckets =16, nb_arms = 4, seed=None, nombre_entrainement=20, epochs = 20, per_batch=True, reward=None, c = 1, reward_type='accuracy'):
+def run_experience(exp_name = 'boltzmann',nb_buckets =16, nb_arms = 4, seed=None, nombre_entrainement=20, nombre_epoch = 20, per_batch=True, reward=None, c = 1, reward_type='accuracy'):
 
     set_random_seed(seed)
     dataset_CIFAR10 =  datasets.CIFAR10(root='./data', train=True, download=True, transform=transformer)
@@ -48,7 +48,7 @@ def run_experience(exp_name = 'boltzmann',nb_buckets =16, nb_arms = 4, seed=None
         dropout.triggered = True
         modele = architectureCIFAR10(dropout)
         pt_modele = pt.Model(modele, "sgd", "cross_entropy", batch_metrics=["accuracy"])
-        history = pt_modele.fit_generator(train_dataloader_CIFAR10,valid_dataloader_CIFAR10, epochs = epochs, callbacks=[activateGradientBoltzmann(test_dataset_CIFAR10,100,reward_type=reward_type)])
+        history = pt_modele.fit_generator(train_dataloader_CIFAR10,valid_dataloader_CIFAR10, epochs = nombre_epoch, callbacks=[activateGradientBoltzmann(test_dataset_CIFAR10,100,reward_type=reward_type)])
         history_list.append(history)
 
     
@@ -56,7 +56,7 @@ def run_experience(exp_name = 'boltzmann',nb_buckets =16, nb_arms = 4, seed=None
 
 
 if __name__ == '__main__':
-    run_experience(exp_name = 'boltzmann',seed=42, nombre_entrainement=2, epochs = 2, c =1, reward_type='accuracy', per_batch=False)
+    run_experience(exp_name = 'boltzmann',seed=42, nombre_entrainement=2, nombre_epoch = 2, c =1, reward_type='accuracy', per_batch=False)
 
 
 

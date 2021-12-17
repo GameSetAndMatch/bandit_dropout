@@ -73,6 +73,7 @@ def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'linUcb',
         #ax[bucket//4,bucket%4].legend()
         #ax[bucket//4,bucket%4].set_ylim(42,54)
     plt.savefig(f"Results/{exp_name}_contexte.png")
+    plt.clf()
 
 
 

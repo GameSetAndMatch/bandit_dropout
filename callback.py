@@ -68,7 +68,7 @@ class activateGradient(pt.Callback):
 
 class activateGradientlinUCB(pt.Callback):
 
-    def __init__(self, data_testeur, taille_testeur):
+    def __init__(self, data_testeur, taille_testeur, reward_type):
         super().__init__()
         self.historique_accuracy_validation = list()
         self.historique_perte_validation = list()
@@ -76,7 +76,8 @@ class activateGradientlinUCB(pt.Callback):
         self.data = data_testeur
         self.taille_data_test = taille_testeur
         self.last_loss = 0
-        self.last_precision = None
+        self.last_reward = None
+        self.reward_type = reward_type
 
     def on_epoch_begin(self, epoch_number, logs):
         if not self.model.network.dropout.batch_update:

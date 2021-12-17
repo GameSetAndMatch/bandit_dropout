@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 import torch
 import matplotlib.pyplot as plt
 from utils import set_random_seed, save_to_pkl, save_loss_acc_plot
-from bandit_dropout import egreedy_bandit_dropout, boltzman_bandit_dropout
+from bandit_dropout import egreedy_bandit_dropout
 from architecture import architectureMNIST
 from callback import activateGradient
 import pickle as pk

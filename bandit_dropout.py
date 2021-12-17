@@ -105,11 +105,7 @@ class BernoulliBandit:
 
 class egreedy_bandit_dropout(nn.Module):
 
-<<<<<<< HEAD
-    def __init__(self, nb_buckets, nb_arms_per_bucket, dropout_min = 0.0, dropout_max = 0.5, epsilon = 0.20, p=0.2,epsilon_decroissant=False):
-=======
     def __init__(self, nb_buckets, nb_arms_per_bucket, dropout_min = 0.0, dropout_max = 0.5, epsilon = 0.50, p=0.2,epsilon_decroissant=False,batch_update=True):
->>>>>>> 266a4090a6b2b86bb58ee360008af438bb53c1f3
         super(egreedy_bandit_dropout, self).__init__()
         self.triggered = False
         self.bucket_boundaries = torch.Tensor(scipy.stats.norm.ppf(torch.linspace(1/nb_buckets, 1-1/nb_buckets ,nb_buckets-1)))                

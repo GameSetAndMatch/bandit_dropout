@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 import torch
 import matplotlib.pyplot as plt
 import pickle as pk
-from utils import set_random_seed, save_to_pkl
+from utils import set_random_seed, save_to_pkl,save_loss_acc_plot
 
 from bandit_dropout import *
 from architecture import architectureMNIST
@@ -33,13 +33,12 @@ def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'Dynamiqu
     valid_dataloader_CIFAR10 = DataLoader(valid_dataset_CIFAR10, batch_size=32, shuffle=True)
 
     nb_buckets = 16
-    taille_subplot = int(nb_buckets**0.5) + 1
-    nb_test = 5
+    taille_subplot = int(np.ceil(nb_buckets**0.5))
     taill_espace_discret = 100
-    result_test = np.zeros((nb_buckets, nb_test, taill_espace_discret))
+    result_test = np.zeros((nb_buckets, nombre_entrainement, taill_espace_discret))
     history_list = list()
 
-    for test_indice in range(nb_test):
+    for test_indice in range(nombre_entrainement):
 
         dropout = dynamic_linucb_bandit_dropout(nb_buckets=nb_buckets,batch_update=per_batch,dropout_max=0.8, p=0.5, gamma=gamma)
         dropout.triggered = True
@@ -54,7 +53,8 @@ def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'Dynamiqu
 
 
     
-    save_to_pkl(exp_name, history_list)
+    save_to_pkl(history_list,exp_name)
+    save_loss_acc_plot(history_list,exp_name)
 
     result_test 
     fig,ax = plt.subplots(taille_subplot,taille_subplot)
@@ -73,13 +73,12 @@ def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'Dynamiqu
         ax[bucket//taille_subplot,bucket%taille_subplot].plot(dropout.discretize_structured_input,np.mean(result_test[bucket,:,:],axis=0),label=str(bucket))
         #ax[bucket//4,bucket%4].legend()
         #ax[bucket//4,bucket%4].set_ylim(42,54)
-    plt.show()
-    plt.savefig(f"Results/{exp_name}.png")
+    plt.savefig(f"Results/{exp_name}_contexte.png")
 
 
 
 if __name__ == '__main__':
 
-    run_experience(seed=42, reward_type = 'loss_increase')
+    run_experience(seed=42, reward_type = 'loss_increase',nombre_entrainement=2,per_batch=False)
 
         

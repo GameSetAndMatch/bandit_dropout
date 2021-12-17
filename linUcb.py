@@ -9,9 +9,9 @@ import torchvision.transforms as transforms
 import torch
 import matplotlib.pyplot as plt
 import pickle as pk
-from utils import set_random_seed, save_to_pkl
-
-from bandit_dropout import egreedy_bandit_dropout, boltzman_bandit_dropout
+from utils import set_random_seed, save_to_pkl,save_loss_acc_plot
+import numpy as np
+from bandit_dropout import egreedy_bandit_dropout
 from architecture import architectureMNIST
 from callback import activateGradient
 
@@ -32,20 +32,19 @@ def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'linUcb',
     train_dataloader_CIFAR10 = DataLoader(train_dataset_CIFAR10, batch_size=32, shuffle=True)
     valid_dataloader_CIFAR10 = DataLoader(valid_dataset_CIFAR10, batch_size=32, shuffle=True)
 
-    nb_buckets = 16
-    taille_subplot = int(nb_buckets**0.5) + 1
-    nb_test = 5
+
+    taille_subplot = int(np.ceil(nb_buckets**0.5))
     taill_espace_discret = 100
-    result_test = np.zeros((nb_buckets, nb_test, taill_espace_discret))
+    result_test = np.zeros((nb_buckets, nombre_entrainement, taill_espace_discret))
     history_list = list()
 
-    for test_indice in range(nb_test):
+    for test_indice in range(nombre_entrainement):
 
         dropout = linucb_bandit_dropout(nb_buckets=nb_buckets,batch_update=per_batch,dropout_max=0.8, p=0.5)
         dropout.triggered = True
         modele = architectureCIFAR10(dropout)
         pt_modele = pt.Model(modele, "sgd", "cross_entropy", batch_metrics=["accuracy"])
-        history = pt_modele.fit_generator(train_dataloader_CIFAR10,valid_dataloader_CIFAR10,epochs=20,callbacks=[activateGradientlinUCB(test_dataset_CIFAR10,100,reward_type=reward_type)])
+        history = pt_modele.fit_generator(train_dataloader_CIFAR10,valid_dataloader_CIFAR10,epochs=nombre_epoch,callbacks=[activateGradientlinUCB(test_dataset_CIFAR10,100,reward_type=reward_type)])
         history_list.append(history)
         for bucket in range(dropout.nb_buckets):
             f_hat_x = dropout.phi_X.dot(np.linalg.inv(dropout.V_t[bucket]).dot(dropout.B[bucket]))
@@ -54,7 +53,8 @@ def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'linUcb',
 
 
     
-    save_to_pkl(exp_name, history_list)
+    save_to_pkl(history_list,exp_name)
+    save_loss_acc_plot(history_list,exp_name)
 
      
     fig,ax = plt.subplots(taille_subplot,taille_subplot)
@@ -73,13 +73,12 @@ def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'linUcb',
         ax[bucket//taille_subplot,bucket%taille_subplot].plot(dropout.discretize_structured_input,np.mean(result_test[bucket,:,:],axis=0),label=str(bucket))
         #ax[bucket//4,bucket%4].legend()
         #ax[bucket//4,bucket%4].set_ylim(42,54)
-    plt.show()
     plt.savefig(f"Results/{exp_name}.png")
 
 
 
 if __name__ == '__main__':
 
-    run_experience(seed=42)
+    run_experience(seed=42,nombre_entrainement=2,nombre_epoch=2)
 
         

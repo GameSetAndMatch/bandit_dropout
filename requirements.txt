@@ -1,0 +1,7 @@
+torch==1.4.0
+torchvision==0.11.1
+poutyne==1.6
+scipy==1.6.0
+pyperclip==1.8.2
+numpy==1.19.5
+pandas==1.2.1

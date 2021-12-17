@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 import torch
 import matplotlib.pyplot as plt
 import pickle as pk
-from utils import set_random_seed,save_to_pkl
+from utils import set_random_seed,save_to_pkl,save_loss_acc_plot
 
 from bandit_dropout import *
 from architecture import architectureMNIST
@@ -23,7 +23,7 @@ transformer = transforms.Compose([
                                transforms.Normalize((0.1307,), (0.3081,))
                                 ])
 
-def run_experience(nombre_entrainement=20, exp_name = 'RandomDropout', seed=None):
+def run_experience(nombre_entrainement=20,nb_epoch = 20, exp_name = 'RandomDropout', seed=None):
 
     set_random_seed(seed)
     dataset_CIFAR10 =  datasets.CIFAR10(root='./data', train=True, download=True, transform=transformer)
@@ -40,17 +40,18 @@ def run_experience(nombre_entrainement=20, exp_name = 'RandomDropout', seed=None
         dropout.triggered = True
         modele = architectureCIFAR10(dropout)
         pt_modele = pt.Model(modele, "sgd", "cross_entropy", batch_metrics=["accuracy"])
-        history = pt_modele.fit_generator(train_dataloader_CIFAR10,valid_dataloader_CIFAR10,epochs=20)
+        history = pt_modele.fit_generator(train_dataloader_CIFAR10,valid_dataloader_CIFAR10,epochs=nb_epoch)
         history_list.append(history)
 
    
-    save_to_pkl(exp_name, history_list)
+    save_to_pkl(history_list,exp_name)
+    save_loss_acc_plot(history_list,exp_name)
 
 
 
 
 if __name__ == '__main__':
 
-    run_experience(seed=42)
+    run_experience(seed=42,nb_epoch=2,nombre_entrainement=2)
 
         

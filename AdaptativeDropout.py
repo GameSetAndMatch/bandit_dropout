@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 from utils import set_random_seed, save_to_pkl
 import pickle as pk
 
+from utils import save_loss_acc_plot, save_to_pkl,set_random_seed
 
-
-from bandit_dropout import egreedy_bandit_dropout, boltzman_bandit_dropout,dynamic_linucb_bandit_dropout
+from bandit_dropout import egreedy_bandit_dropout,dynamic_linucb_bandit_dropout
 
 from callback import activateGradient
 
@@ -65,7 +65,7 @@ transformer = transforms.Compose([
 
 
 
-def run_experience(seed=None, exp_name = "Adaptative_Dropout",nb_test=20):
+def run_experience(seed=None, exp_name = "Adaptative_Dropout",nb_test=20, nb_epochs=20):
     set_random_seed(seed=seed)
     dataset_CIFAR10 =  datasets.CIFAR10(root='./data', train=True, download=True, transform=transformer)
     train_dataset_CIFAR10, valid_dataset_CIFAR10, test_dataset_CIFAR10 = random_split(dataset_CIFAR10,[train_size, valid_size,len(dataset_CIFAR10)-valid_size-train_size])
@@ -80,16 +80,17 @@ def run_experience(seed=None, exp_name = "Adaptative_Dropout",nb_test=20):
 
         modele = architectureCIFAR10()
         pt_modele = pt.Model(modele, "sgd", "cross_entropy", batch_metrics=["accuracy"])
-        history = pt_modele.fit_generator(train_dataloader_CIFAR10,valid_dataloader_CIFAR10,epochs=20)
+        history = pt_modele.fit_generator(train_dataloader_CIFAR10,valid_dataloader_CIFAR10,epochs=nb_epochs)
         history_list.append(history)
 
     save_to_pkl(history_list,exp_name)
+    save_loss_acc_plot(history_list,exp_name)
 
 
 
 
 
 if __name__ == '__main__':
-    run_experience(42, "adaptative_dropout",nb_test=1)
+    run_experience(42, "adaptative_dropout",nb_test=2,nb_epochs=2)
 
 

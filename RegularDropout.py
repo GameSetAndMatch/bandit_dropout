@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 import torch
 import matplotlib.pyplot as plt
 import pickle as pk
-from utils import set_random_seed, save_to_pkl
+from utils import set_random_seed, save_to_pkl, save_loss_acc_plot
 
 from bandit_dropout import *
 from architecture import architectureMNIST
@@ -40,18 +40,17 @@ def run_experience(nombre_entrainement=2, nombre_epoch=20,p=0.5, exp_name = 'Reg
         dropout.triggered = True
         modele = architectureCIFAR10(dropout)
         pt_modele = pt.Model(modele, "sgd", "cross_entropy", batch_metrics=["accuracy"])
-        history = pt_modele.fit_generator(train_dataloader_CIFAR10,valid_dataloader_CIFAR10,epochs=20)
+        history = pt_modele.fit_generator(train_dataloader_CIFAR10,valid_dataloader_CIFAR10,epochs=nombre_epoch)
         history_list.append(history)
 
-   
-    with open(f'history/{exp_name}.pkl', 'wb') as f:
-        pk.dump(history_list, f)
+    save_to_pkl(history_list,exp_name)
+    save_loss_acc_plot(history_list,exp_name)
 
 
 
 
 if __name__ == '__main__':
 
-    run_experience(seed=42)
+    run_experience(seed=42,nombre_epoch=2)
 
         

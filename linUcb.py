@@ -73,7 +73,7 @@ def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'linUcb',
         ax[bucket//taille_subplot,bucket%taille_subplot].plot(dropout.discretize_structured_input,np.mean(result_test[bucket,:,:],axis=0),label=str(bucket))
         #ax[bucket//4,bucket%4].legend()
         #ax[bucket//4,bucket%4].set_ylim(42,54)
-    plt.savefig(f"Results/{exp_name}.png")
+    plt.savefig(f"Results/{exp_name}_contexte.png")
 
 
 

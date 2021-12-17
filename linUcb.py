@@ -23,7 +23,7 @@ transformer = transforms.Compose([
                                transforms.Normalize((0.1307,), (0.3081,))
                                 ])
 
-def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'linUcb',nb_buckets = 16,per_batch=True, reward=None, reward_type='accuracy', seed=None):
+def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'linUcb',nb_buckets = 16,per_batch=True, reward=None, reward_type='accuracy', seed=None,sigma=5):
 
     set_random_seed(seed)
     dataset_CIFAR10 =  datasets.CIFAR10(root='./data', train=True, download=True, transform=transformer)

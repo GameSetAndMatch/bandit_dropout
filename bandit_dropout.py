@@ -295,7 +295,7 @@ class boltzmann_bandit_dropout(nn.Module):
 
 class linucb_bandit_dropout(nn.Module):
 
-    def __init__(self, nb_buckets=16, dropout_min = 0.0, dropout_max = 0.5, epsilon = 0.50, p=0.2 , discretize_size=100, features_size=4,Lambda=0.1, batch_update = True,seed=None):
+    def __init__(self, nb_buckets=16, dropout_min = 0.0, dropout_max = 0.5, epsilon = 0.50, p=0.2 , discretize_size=100, features_size=4,Lambda=0.1, batch_update = True,sigma=5,seed=None):
         super(linucb_bandit_dropout, self).__init__()
         self.triggered = False
         self.bucket_boundaries = torch.Tensor(scipy.stats.norm.ppf(torch.linspace(1/nb_buckets, 1-1/nb_buckets ,nb_buckets-1)))                
@@ -307,7 +307,7 @@ class linucb_bandit_dropout(nn.Module):
         #LinUCB
         self.batch_update = batch_update
         self.upper_bound_norme_theta = 1 # À mettre en argument
-        self.upper_bound_sigma = 15 # À mettre en argument
+        self.upper_bound_sigma = sigma # À mettre en argument
         self.random = np.random.RandomState(seed)
         self.discretize_size = discretize_size
         self.discretize_structured_input = np.linspace(dropout_min,dropout_max,discretize_size)
@@ -410,7 +410,7 @@ class linucb_bandit_dropout(nn.Module):
 
 class dynamic_linucb_bandit_dropout(nn.Module):
 
-    def __init__(self, nb_buckets=16, dropout_min = 0.0, dropout_max = 0.5, epsilon = 0.50, p=0.2 , discretize_size=100, features_size=4, Lambda=0.1, gamma = 0.995, batch_update = True ,seed=None):
+    def __init__(self, nb_buckets=16, dropout_min = 0.0, dropout_max = 0.5, epsilon = 0.50, p=0.2 , discretize_size=100, features_size=4, Lambda=0.1, gamma = 0.995,sigma=5, batch_update = True ,seed=None):
         super(dynamic_linucb_bandit_dropout, self).__init__()
         self.triggered = False
         self.bucket_boundaries = torch.Tensor(scipy.stats.norm.ppf(torch.linspace(1/nb_buckets, 1-1/nb_buckets ,nb_buckets-1)))                
@@ -422,7 +422,7 @@ class dynamic_linucb_bandit_dropout(nn.Module):
         #LinUCB
         self.batch_update = batch_update
         self.upper_bound_norme_theta = 1 # À mettre en argument
-        self.upper_bound_sigma = 15 # À mettre en argument
+        self.upper_bound_sigma = sigma # À mettre en argument
         self.random = np.random.RandomState(seed)
         self.discretize_size = discretize_size
         self.discretize_structured_input = np.linspace(dropout_min,dropout_max,discretize_size)

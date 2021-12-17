@@ -23,7 +23,7 @@ transformer = transforms.Compose([
                                transforms.Normalize((0.1307,), (0.3081,))
                                 ])
 
-def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'DynamiquelinUcb',nb_buckets = 16, per_batch=True, reward=None, reward_type='accuracy',gamma=0.995, seed=None):
+def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'DynamiquelinUcb',nb_buckets = 16, per_batch=True, reward=None, reward_type='accuracy',gamma=0.995, sigma=5, seed=None):
 
     set_random_seed(seed)
     dataset_CIFAR10 =  datasets.CIFAR10(root='./data', train=True, download=True, transform=transformer)
@@ -40,7 +40,7 @@ def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'Dynamiqu
 
     for test_indice in range(nombre_entrainement):
 
-        dropout = dynamic_linucb_bandit_dropout(nb_buckets=nb_buckets,batch_update=per_batch,dropout_max=0.8, p=0.5, gamma=gamma)
+        dropout = dynamic_linucb_bandit_dropout(nb_buckets=nb_buckets,batch_update=per_batch,dropout_max=0.8, p=0.5, gamma=gamma,sigma=5)
         dropout.triggered = True
         modele = architectureCIFAR10(dropout)
         pt_modele = pt.Model(modele, "sgd", "cross_entropy", batch_metrics=["accuracy"])

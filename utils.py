@@ -6,7 +6,7 @@ import os
 import pickle as pk
 import matplotlib.pyplot as plt
 
-plt.rcParams["figure.figsize"] = (5, 4)
+plt.rcParams["figure.figsize"] = (7, 6)
 
 def set_random_seed(seed):
     torch.manual_seed(seed)

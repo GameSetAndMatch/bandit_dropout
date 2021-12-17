@@ -441,10 +441,8 @@ class dynamic_linucb_bandit_dropout(nn.Module):
     def get_mask(self, dropout_rates):
         if (type(dropout_rates) != torch.Tensor) :
             dropout_rates = torch.Tensor(dropout_rates)
-        if torch.cuda.is_available():
-            mask =  torch.lt(dropout_rates,  torch.FloatTensor(dropout_rates.shape).uniform_(0, 1).cuda())
-        else:
-            mask = torch.lt(dropout_rates,  torch.FloatTensor(dropout_rates.shape).uniform_(0, 1))
+
+        mask = torch.lt(dropout_rates,  torch.FloatTensor(dropout_rates.shape).uniform_(0, 1))
 
         return mask.int()
     

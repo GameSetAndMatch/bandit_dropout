@@ -114,7 +114,7 @@ class egreedy_bandit_dropout(nn.Module):
         self.nb_arms_per_bucket = nb_arms_per_bucket
         self.nb_buckets = nb_buckets
         self.dropout_before_triggered = nn.Dropout(p)
-        self.mu_hat = torch.ones(nb_buckets, nb_arms_per_bucket)
+        self.mu_hat = torch.zeros(nb_buckets, nb_arms_per_bucket)
         self.cumulated_rewards = torch.zeros(nb_buckets, nb_arms_per_bucket)
         self.nb_played = torch.zeros(nb_buckets, nb_arms_per_bucket)
         self.last_played = torch.zeros(nb_buckets, nb_arms_per_bucket)
@@ -158,12 +158,13 @@ class egreedy_bandit_dropout(nn.Module):
             epsilon = self.epsilon
         explore = (torch.Tensor(self.mu_hat.shape[0]).uniform_(0, 1) < epsilon).int()
         arms_chosen_for_each_bucket = (1-explore) * torch.argmax(self.mu_hat, axis = 1) + explore * torch.randint(0, self.nb_arms_per_bucket, (self.mu_hat.shape[0],))
-        if self.update:
-            self.update_metrics(arms_chosen_for_each_bucket)
+            
         return arms_chosen_for_each_bucket
 
     def get_dropout_rate_per_arm(self):
-        self.dropout_rate_per_arm = self.arms[self.egreedy()]
+        arms_chosen_for_each_bucket = self.egreedy()
+        self.update_metrics(arms_chosen_for_each_bucket)
+        self.dropout_rate_per_arm = self.arms[arms_chosen_for_each_bucket]
 
     def get_dropout_rate_for_each_neurons(self, x):
 

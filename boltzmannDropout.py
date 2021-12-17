@@ -8,7 +8,7 @@ from torch.utils.data import  DataLoader, random_split
 import torchvision.transforms as transforms
 import torch
 import matplotlib.pyplot as plt
-from utils import set_random_seed, save_to_pkl
+from utils import set_random_seed, save_experience
 from bandit_dropout import boltzmann_bandit_dropout
 from architecture import architectureMNIST
 from callback import activateGradient
@@ -52,11 +52,11 @@ def run_experience(exp_name = 'boltzmann',nb_buckets =16, nb_arms = 4, seed=None
         history_list.append(history)
 
     
-    save_to_pkl(history_list, exp_name)
+    save_experience(history_list, exp_name)
 
 
 if __name__ == '__main__':
-    run_experience(exp_name = 'boltzmann',seed=42, nombre_entrainement=20, epochs = 20, c =1, reward_type='accuracy', per_batch=False)
+    run_experience(exp_name = 'boltzmann',seed=42, nombre_entrainement=2, epochs = 2, c =1, reward_type='accuracy', per_batch=False)
 
 
 

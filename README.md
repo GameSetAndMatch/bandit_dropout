@@ -18,9 +18,11 @@ possède une fonction ```run_experience```. La fonction prend en arguments les p
   ``` DynamiqueLinUcb.run_experience(batch_update = True, seed=42) ```
   - Une fois le test executé, un dossier dans résultat sera créé selon le nom de l'expérience et contiendra la perte moyenne et la précision moyenne sur l'ensemble de validation.
   Si vous faites un test de bandit contextuel structuré, vous obtiendrez aussi l'estimation de la structure selon chaque contexte. Voici les images que vous devriez obtenir pour ce test:
-  ![Contexte](https://github.com/GameSetAndMatch/bandit_dropout/blob/master/results/Acc_dynamiclinUcb_batch/Acc_dynamiclinUcb_batch_contexte.png)
-  ![Précision](https://github.com/GameSetAndMatch/bandit_dropout/blob/master/results/Acc_dynamiclinUcb_batch/Acc_dynamiclinUcb_batch_val_acc.png)
-  ![Perte](https://github.com/GameSetAndMatch/bandit_dropout/blob/master/results/Acc_dynamiclinUcb_batch/Acc_dynamiclinUcb_batch_loss_acc.png)
+  <center>
+       <img src="https://github.com/GameSetAndMatch/bandit_dropout/blob/master/results/Acc_dynamiclinUcb_batch/Acc_dynamiclinUcb_batch_contexte.png" width="500" height="300">
+       <img src="https://github.com/GameSetAndMatch/bandit_dropout/blob/master/results/Acc_dynamiclinUcb_batch/Acc_dynamiclinUcb_batch_val_acc.png" width="500" height="300">
+       <img src="https://github.com/GameSetAndMatch/bandit_dropout/blob/master/results/Acc_dynamiclinUcb_batch/Acc_dynamiclinUcb_batch_loss_acc.png" width="500" height="300">
+  </center>
   
   De plus, l'historique de l'entraînement sera sauvegardé en pickle.
   

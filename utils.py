@@ -32,7 +32,6 @@ def save_loss_acc_plot(history,exp_name):
     plt.xlabel("epoch")
     plt.ylabel("Précision sur la validation")
     plt.ylim(10,55)
-    plt.legend(loc="upper right")
     plt.savefig(f"results/{exp_name}_val_acc.png")
     plt.close()
     result_loss = np.zeros((len(history),len(history[0]))) 
@@ -47,5 +46,4 @@ def save_loss_acc_plot(history,exp_name):
     plt.xlabel("epoch")
     plt.ylabel("Perte sur la validation")
     plt.ylim(0,4)
-    plt.legend(loc="upper right")
     plt.savefig(f"results/{exp_name}_loss_acc.png")

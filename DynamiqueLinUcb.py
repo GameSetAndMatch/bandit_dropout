@@ -23,7 +23,7 @@ transformer = transforms.Compose([
                                transforms.Normalize((0.1307,), (0.3081,))
                                 ])
 
-def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'DynamiquelinUcb',nb_buckets = 16,per_batch=True, reward=None, reward_type='accuracy',gamma=0.995, seed=None):
+def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'DynamiquelinUcb',nb_buckets = 16, per_batch=True, reward=None, reward_type='accuracy',gamma=0.995, seed=None):
 
     set_random_seed(seed)
     dataset_CIFAR10 =  datasets.CIFAR10(root='./data', train=True, download=True, transform=transformer)
@@ -44,7 +44,7 @@ def run_experience(nombre_entrainement=20, nombre_epoch=20, exp_name = 'Dynamiqu
         dropout.triggered = True
         modele = architectureCIFAR10(dropout)
         pt_modele = pt.Model(modele, "sgd", "cross_entropy", batch_metrics=["accuracy"])
-        history = pt_modele.fit_generator(train_dataloader_CIFAR10,valid_dataloader_CIFAR10,epochs=20,callbacks=[activateGradientlinUCB(test_dataset_CIFAR10,100,reward_type=reward_type)])
+        history = pt_modele.fit_generator(train_dataloader_CIFAR10,valid_dataloader_CIFAR10,epochs=nombre_epoch,callbacks=[activateGradientlinUCB(test_dataset_CIFAR10,100,reward_type=reward_type)])
         history_list.append(history)
         for bucket in range(dropout.nb_buckets):
             f_hat_x = dropout.phi_X.dot(np.linalg.inv(dropout.V_t[bucket]).dot(dropout.B[bucket]))

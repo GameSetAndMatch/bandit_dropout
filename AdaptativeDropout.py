@@ -65,7 +65,7 @@ transformer = transforms.Compose([
 
 
 
-def run_experience(seed=None, exp_name = "Adaptative_Dropout"):
+def run_experience(seed=None, exp_name = "Adaptative_Dropout",nb_test=20):
     set_random_seed(seed=seed)
     dataset_CIFAR10 =  datasets.CIFAR10(root='./data', train=True, download=True, transform=transformer)
     train_dataset_CIFAR10, valid_dataset_CIFAR10, test_dataset_CIFAR10 = random_split(dataset_CIFAR10,[train_size, valid_size,len(dataset_CIFAR10)-valid_size-train_size])
@@ -73,9 +73,7 @@ def run_experience(seed=None, exp_name = "Adaptative_Dropout"):
     train_dataloader_CIFAR10 = DataLoader(train_dataset_CIFAR10, batch_size=32, shuffle=True)
     valid_dataloader_CIFAR10 = DataLoader(valid_dataset_CIFAR10, batch_size=32, shuffle=True)
 
-    nb_buckets = 4
-    nb_test = 20
-    taill_espace_discret = 100
+    
     history_list = []
 
     for test_indice in range(nb_test):
@@ -85,13 +83,13 @@ def run_experience(seed=None, exp_name = "Adaptative_Dropout"):
         history = pt_modele.fit_generator(train_dataloader_CIFAR10,valid_dataloader_CIFAR10,epochs=20)
         history_list.append(history)
 
-    save_to_pkl(exp_name, history_list)
+    save_to_pkl(history_list,exp_name)
 
 
 
 
 
 if __name__ == '__main__':
-    run_experience(42, "adaptative_dropout")
+    run_experience(42, "adaptative_dropout",nb_test=1)
 
 

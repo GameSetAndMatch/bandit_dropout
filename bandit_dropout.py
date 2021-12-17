@@ -114,7 +114,7 @@ class egreedy_bandit_dropout(nn.Module):
         self.nb_arms_per_bucket = nb_arms_per_bucket
         self.nb_buckets = nb_buckets
         self.dropout_before_triggered = nn.Dropout(p)
-        self.mu_hat = torch.ones(nb_buckets, nb_arms_per_bucket)
+        self.mu_hat = torch.zeros(nb_buckets, nb_arms_per_bucket)
         self.cumulated_rewards = torch.zeros(nb_buckets, nb_arms_per_bucket)
         self.nb_played = torch.zeros(nb_buckets, nb_arms_per_bucket)
         self.last_played = torch.zeros(nb_buckets, nb_arms_per_bucket)
@@ -155,12 +155,13 @@ class egreedy_bandit_dropout(nn.Module):
             epsilon = self.epsilon
         explore = (torch.Tensor(self.mu_hat.shape[0]).uniform_(0, 1) < epsilon).int()
         arms_chosen_for_each_bucket = (1-explore) * torch.argmax(self.mu_hat, axis = 1) + explore * torch.randint(0, self.nb_arms_per_bucket, (self.mu_hat.shape[0],))
-        if self.update:
-            self.update_metrics(arms_chosen_for_each_bucket)
+            
         return arms_chosen_for_each_bucket
 
     def get_dropout_rate_per_arm(self):
-        self.dropout_rate_per_arm = self.arms[self.egreedy()]
+        arms_chosen_for_each_bucket = self.egreedy()
+        self.update_metrics(arms_chosen_for_each_bucket)
+        self.dropout_rate_per_arm = self.arms[arms_chosen_for_each_bucket]
 
     def get_dropout_rate_for_each_neurons(self, x):
 
@@ -224,22 +225,11 @@ class boltzmann_bandit_dropout(nn.Module):
     def get_mask(self, dropout_rates):
         new_mask = torch.lt(dropout_rates,  torch.FloatTensor(dropout_rates.shape).uniform_(0, 1))
         self.mask = new_mask.int()
-        self.choose_new_arms = False
         return self.mask
     
     def calculate_mu_hat(self):
         self.mu_hat = self.cumulated_rewards/self.nb_played
         
-    def update_metrics(self, arms_chosen_for_each_bucket, arms_to_update = None):
-        if arms_to_update is None:
-            self.last_played = torch.zeros(self.nb_buckets, self.nb_arms_per_bucket)
-            self.last_played[torch.arange(self.nb_buckets), arms_chosen_for_each_bucket] = 1
-            self.nb_played += self.last_played
-
-        else:
-            self.last_played[arms_to_update, ] = 0  
-            self.last_played[arms_to_update, arms_chosen_for_each_bucket[arms_to_update]] = 1
-            self.nb_played += self.last_played
 
     def softmax(self, probs):
 	    e = np.exp(probs)
@@ -261,18 +251,19 @@ class boltzmann_bandit_dropout(nn.Module):
             self.calculate_mu_hat()
             probs = np.apply_along_axis(self.softmax , 0, self.eta * np.array(self.mu_hat.T)).T
             arms_chosen_for_each_bucket =  np.apply_along_axis(self.choose_arm_from_probs, 1, probs)
-            #self.update_metrics(arms_chosen_for_each_bucket = arms_chosen_for_each_bucket, arms_to_update = self.arms_to_update)
-            self.update_metrics(arms_chosen_for_each_bucket = arms_chosen_for_each_bucket)
-            self.arms_to_update = torch.tensor([(self.arms_to_update + 1) % (len(self.arms) + 1)])
-            self.arms_chosen_for_each_bucket = torch.argmax(self.last_played, 1)
+
+            self.last_played = torch.zeros(self.nb_buckets, self.nb_arms_per_bucket)
+            self.last_played[torch.arange(self.nb_buckets), arms_chosen_for_each_bucket] = 1
+            self.arms_chosen_for_each_bucket = arms_chosen_for_each_bucket
+            self.choose_new_arms = False
         
 
         return self.arms_chosen_for_each_bucket
 
     def get_dropout_rate_per_arm(self):
         dropout_rate_per_arm = self.arms[self.choose_arms_per_bucket()]
-        for i in range(self.nb_buckets):
-            self.dropout_values[i].append(dropout_rate_per_arm[i])
+        #for i in range(self.nb_buckets):
+        #    self.dropout_values[i].append(dropout_rate_per_arm[i])
         return dropout_rate_per_arm
 
     def get_dropout_rate_for_each_neurons(self, x):
@@ -332,10 +323,8 @@ class linucb_bandit_dropout(nn.Module):
     def get_mask(self, dropout_rates):
         if (type(dropout_rates) != torch.Tensor) :
             dropout_rates = torch.Tensor(dropout_rates)
-        if torch.cuda.is_available():
-            mask =  torch.lt(dropout_rates,  torch.FloatTensor(dropout_rates.shape).uniform_(0, 1).cuda())
-        else:
-            mask = torch.lt(dropout_rates,  torch.FloatTensor(dropout_rates.shape).uniform_(0, 1))
+
+        mask = torch.lt(dropout_rates,  torch.FloatTensor(dropout_rates.shape).uniform_(0, 1))
 
         return mask.int()
     

@@ -21,23 +21,23 @@ class activateGradient(pt.Callback):
             loss, precision = self.model.evaluate_dataset(data_test,verbose=False,batch_size=self.taille_data_test)
             if self.reward_type == 'accuracy':
                 reward = precision
-                self.model.network.dropout.cumulated_rewards += reward
+                self.model.network.dropout.cumulated_rewards += self.model.network.dropout.last_played*reward
             elif (self.reward_type == 'accuracy_increase'):
 
                 if self.last_reward != None:
                     reward = precision-self.last_reward
-                    self.model.network.dropout.cumulated_rewards += reward
+                    self.model.network.dropout.cumulated_rewards += self.model.network.dropout.last_played*reward
                 self.last_reward = precision
 
             elif self.reward_type == 'loss':
                 reward = loss
-                self.model.network.dropout.cumulated_rewards += -reward
+                self.model.network.dropout.cumulated_rewards += self.model.network.dropout.last_played*-reward
             
             elif (self.reward_type == 'loss_increase'):
 
                 if self.last_reward != None:
                     reward = loss-self.last_reward
-                    self.model.network.dropout.cumulated_rewards += -reward
+                    self.model.network.dropout.cumulated_rewards += self.model.network.dropout.last_played*-reward
                 self.last_reward = loss
 
     def on_epoch_begin(self, epoch_number, logs):
@@ -49,7 +49,7 @@ class activateGradient(pt.Callback):
             self.model.network.dropout.get_dropout_rate_per_arm()
 
     def on_epoch_end(self, batch, logs):
-          ## À chaque début d'epoch
+        ## À chaque début d'epoch
         self.historique_accuracy_validation.append(logs["val_acc"])  
         self.historique_perte_validation.append(logs["val_loss"])
 
@@ -85,23 +85,30 @@ class activateGradientBoltzmann(pt.Callback):
             loss, precision = self.model.evaluate_dataset(data_test,verbose=False,batch_size=self.taille_data_test)
             if self.reward_type == 'accuracy':
                 reward = precision
-                self.model.network.dropout.cumulated_rewards += reward/100 * self.model.network.dropout.last_played 
+                self.model.network.dropout.cumulated_rewards += reward/100 * self.model.network.dropout.last_played
+                self.model.network.dropout.nb_played += self.model.network.dropout.last_played
+                self.model.network.dropout.choose_new_arms = True 
             elif (self.reward_type == 'accuracy_increase'):
 
                 if self.last_reward != None:
                     reward = precision-self.last_reward
                     self.model.network.dropout.cumulated_rewards += reward/100 * self.model.network.dropout.last_played
+                    self.model.network.dropout.nb_played += self.model.network.dropout.last_played
+                    self.model.network.dropout.choose_new_arms = True
                 self.last_reward = precision
 
             elif self.reward_type == 'loss':
                 reward = loss
                 self.model.network.dropout.cumulated_rewards += -reward * self.model.network.dropout.last_played
-            
+                self.model.network.dropout.nb_played += self.model.network.dropout.last_played
+                self.model.network.dropout.choose_new_arms = True
             elif (self.reward_type == 'loss_increase'):
 
                 if self.last_reward != None:
                     reward = loss-self.last_reward
                     self.model.network.dropout.cumulated_rewards += -reward * self.model.network.dropout.last_played
+                    self.model.network.dropout.nb_played += self.model.network.dropout.last_played
+                    self.model.network.dropout.choose_new_arms = True
                 self.last_reward = loss
 
     def on_epoch_begin(self, epoch_number, logs):
@@ -112,8 +119,9 @@ class activateGradientBoltzmann(pt.Callback):
         if self.model.network.dropout.batch_update:
             self.model.network.dropout.get_dropout_rate_per_arm()
 
+
     def on_epoch_end(self, batch, logs):
-          ## À chaque début d'epoch
+        ## À chaque début d'epoch
         self.historique_accuracy_validation.append(logs["val_acc"])  
         self.historique_perte_validation.append(logs["val_loss"])
 

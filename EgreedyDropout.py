@@ -8,7 +8,7 @@ from torch.utils.data import  DataLoader, random_split
 import torchvision.transforms as transforms
 import torch
 import matplotlib.pyplot as plt
-from utils import set_random_seed, save_to_pkl
+from utils import set_random_seed, save_to_pkl, save_loss_acc_plot
 from bandit_dropout import egreedy_bandit_dropout
 from architecture import architectureMNIST
 from callback import activateGradient
@@ -30,7 +30,7 @@ train_dataloader_CIFAR10 = DataLoader(train_dataset_CIFAR10, batch_size=32, shuf
 valid_dataloader_CIFAR10 = DataLoader(valid_dataset_CIFAR10, batch_size=32, shuffle=True)
 
 
-def run_experience(exp_name = 'egreedy',nb_buckets =16, nb_arms = 4, seed=None, epsilon=0.1, epsilon_decroissant=False, nombre_entrainement=20,reward_type='accuracy_increase'):
+def run_experience(exp_name = 'egreedy',nb_buckets =16, nb_arms = 4, seed=None, epsilon=0.1, epsilon_decroissant=False, nombre_entrainement=20,reward_type='accuracy_increase',batch_update = False):
 
     set_random_seed(seed)
     dataset_CIFAR10 =  datasets.CIFAR10(root='./data', train=True, download=True, transform=transformer)
@@ -43,7 +43,7 @@ def run_experience(exp_name = 'egreedy',nb_buckets =16, nb_arms = 4, seed=None, 
     history_list = list()
     for test_indice in range(nombre_entrainement):
 
-        dropout = egreedy_bandit_dropout(nb_buckets, nb_arms, dropout_min=0,dropout_max=0.8, epsilon=0.1,batch_update=False)
+        dropout = egreedy_bandit_dropout(nb_buckets, nb_arms, dropout_min=0,dropout_max=0.8, epsilon=0.1,batch_update=batch_update)
         dropout.triggered = True
         modele = architectureCIFAR10(dropout)
         pt_modele = pt.Model(modele, "sgd", "cross_entropy", batch_metrics=["accuracy"])
@@ -51,11 +51,12 @@ def run_experience(exp_name = 'egreedy',nb_buckets =16, nb_arms = 4, seed=None, 
         history_list.append(history)
 
    
-    save_to_pkl(exp_name, history_list)
+    save_to_pkl(history_list,exp_name)
+    save_loss_acc_plot(history_list,exp_name)
 
 
 if __name__ == '__main__':
-    run_experience(exp_name = 'egreedy',seed=42, epsilon=0.1, epsilon_decroissant=False, nombre_entrainement=20)
+    run_experience(exp_name = 'egreedy',seed=42, epsilon=0.1, epsilon_decroissant=False, nombre_entrainement=1,reward_type = 'accuracy',batch_update=False)
 
 
 
